@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Tarjuman — real-time translation that verifies its own output. Every translation carries a verdict and the evidence behind it.">
+<meta name="theme-color" content="#0b0f14">
+<title>Tarjuman — translation that shows its work</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M9 11h9M13.5 11v11M9 22h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M20 15.5c1.6 0 2.6 1.1 2.6 2.6 0 2.2-2.6 4.4-2.6 4.4s-2.6-2.2-2.6-4.4c0-1.5 1-2.6 2.6-2.6z" fill="currentColor" opacity=".55"/>
+      </svg>
+      <span class="brand-text">
+        <strong>Tarjuman</strong>
+        <em>ترجمان</em>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <button class="nav-btn is-active" data-view="translate" type="button">Translate</button>
+      <button class="nav-btn" data-view="conversation" type="button">Conversation</button>
+      <button class="nav-btn" data-view="history" type="button">History</button>
+    </nav>
+    <div class="auth-slot" id="authSlot">
+      <button class="btn btn-ghost btn-sm" id="signInBtn" type="button">Sign in</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <!-- ============ TRANSLATE ============ -->
+  <section class="view is-active" id="view-translate">
+    <div class="hero">
+      <h1>Translation that shows its work.</h1>
+      <p class="lede">
+        Most translators give you a number and a shrug. Tarjuman checks every
+        translation on five independent axes and shows you the evidence — so when
+        it says a translation is bad, you can see exactly why.
+      </p>
+    </div>
+
+    <div class="card composer">
+      <div class="lang-row">
+        <label class="field">
+          <span class="field-label">From</span>
+          <select id="sourceLang" class="select"></select>
+        </label>
+        <button class="swap" id="swapBtn" type="button" aria-label="Swap languages" title="Swap languages">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v13m0 0-3-3m3 3 3-3M17 20V7m0 0-3 3m3-3 3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <label class="field">
+          <span class="field-label">To</span>
+          <select id="targetLang" class="select"></select>
+        </label>
+      </div>
+
+      <div class="panes">
+        <div class="pane">
+          <textarea id="sourceText" class="textarea" rows="7" maxlength="5000"
+            placeholder="Type or paste text here…"
+            aria-label="Text to translate" spellcheck="false"></textarea>
+          <div class="pane-foot">
+            <span class="counter" id="charCount">0 / 5000</span>
+            <div class="pane-actions">
+              <button class="btn btn-ghost btn-sm" id="sampleBtn" type="button">Try a sample</button>
+              <button class="btn btn-ghost btn-sm" id="clearBtn" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pane pane-out">
+          <div class="out-head">
+            <span class="out-label">Translation</span>
+            <div class="out-tools">
+              <button class="icon-btn" id="copyBtn" type="button" title="Copy" aria-label="Copy translation" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15 5H6a2 2 0 0 0-2 2v9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button class="icon-btn" id="saveBtn" type="button" title="Save to history" aria-label="Save to history" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="out-body" id="outputBody">
+            <p class="placeholder">Your translation will appear here, with its verdict.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer-foot">
+        <label class="check">
+          <input type="checkbox" id="roundTripToggle" checked>
+          <span>Run round-trip check <em>(doubles provider calls, catches meaning loss)</em></span>
+        </label>
+        <button class="btn btn-primary" id="translateBtn" type="button">
+          <span class="btn-label">Translate</span>
+          <span class="spinner" hidden></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="verdict-panel" id="verdictPanel" hidden></div>
+  </section>
+
+  <!-- ============ CONVERSATION ============ -->
+  <section class="view" id="view-conversation">
+    <div class="hero hero-sm">
+      <h1>Conversation mode</h1>
+      <p class="lede">Two people, two languages. Each turn is translated and marked with its own verdict, so you know which lines to trust.</p>
+    </div>
+
+    <div class="card" id="convSetup">
+      <div class="lang-row">
+        <label class="field">
+          <span class="field-label">Speaker A</span>
+          <select id="convLangA" class="select"></select>
+        </label>
+        <span class="conv-vs" aria-hidden="true">↔</span>
+        <label class="field">
+          <span class="field-label">Speaker B</span>
+          <select id="convLangB" class="select"></select>
+        </label>
+      </div>
+      <button class="btn btn-primary" id="startConvBtn" type="button">Start conversation</button>
+      <p class="hint" id="convHint">Sign in to save conversations. You can still try it without an account.</p>
+    </div>
+
+    <div class="card conv-card" id="convActive" hidden>
+      <div class="conv-head">
+        <div>
+          <strong id="convTitle">Conversation</strong>
+          <span class="conv-langs" id="convLangs"></span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="endConvBtn" type="button">End</button>
+      </div>
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+      <div class="conv-input">
+        <div class="speaker-toggle" role="group" aria-label="Who is speaking">
+          <button class="spk is-active" data-speaker="a" type="button" id="spkA">A</button>
+          <button class="spk" data-speaker="b" type="button" id="spkB">B</button>
+        </div>
+        <input class="input" id="convInput" type="text" placeholder="Type a message…" maxlength="5000" aria-label="Message">
+        <button class="btn btn-primary btn-sm" id="sendTurnBtn" type="button">Send</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="view" id="view-history">
+    <div class="hero hero-sm">
+      <h1>Your history</h1>
+      <p class="lede">Every saved translation keeps the verdict it earned at the time — not what the app would say about it today.</p>
+    </div>
+    <div class="card" id="historyCard">
+      <div class="history-tools">
+        <label class="check">
+          <input type="checkbox" id="favOnly">
+          <span>Favourites only</span>
+        </label>
+        <select id="verdictFilter" class="select select-sm">
+          <option value="">All verdicts</option>
+          <option value="verified">Verified</option>
+          <option value="likely">Likely</option>
+          <option value="uncertain">Uncertain</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+      <div id="historyList" class="history-list"></div>
+      <div class="history-foot">
+        <button class="btn btn-ghost btn-sm" id="loadMoreBtn" type="button" hidden>Load more</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p>
+      <strong>Tarjuman</strong> — built by ABraz Baloch.
+      Translation by <a href="https://mymemory.translated.net" rel="noopener noreferrer" target="_blank">MyMemory</a>.
+    </p>
+    <p class="foot-note">
+      Tarjuman verifies <em>how</em> a translation was produced, not whether the
+      original claim is true. It cannot tell you if a sentence is factually
+      correct — only whether the translation of it is trustworthy.
+    </p>
+  </div>
+</footer>
+
+<!-- auth modal -->
+<div class="modal" id="authModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <button class="modal-x" data-close type="button" aria-label="Close">×</button>
+    <h2 id="authTitle">Sign in</h2>
+    <p class="modal-sub" id="authSub">Save your translations and conversations.</p>
+    <form id="authForm" novalidate>
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input class="input" type="email" id="authEmail" autocomplete="email" required>
+      </label>
+      <label class="field" id="nameField" hidden>
+        <span class="field-label">Display name <em>(optional)</em></span>
+        <input class="input" type="text" id="authName" autocomplete="nickname" maxlength="80">
+      </label>
+      <label class="field">
+        <span class="field-label">Password</span>
+        <input class="input" type="password" id="authPassword" autocomplete="current-password" required minlength="8">
+      </label>
+      <p class="form-error" id="authError" hidden></p>
+      <button class="btn btn-primary btn-block" type="submit" id="authSubmit">Sign in</button>
+    </form>
+    <p class="modal-switch">
+      <span id="switchText">No account?</span>
+      <button class="link-btn" id="switchMode" type="button">Create one</button>
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

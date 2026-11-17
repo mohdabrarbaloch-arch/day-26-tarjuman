@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tarjuman
+      POSTGRES_PASSWORD: tarjuman
+      POSTGRES_DB: tarjuman
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tarjuman -d tarjuman"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://tarjuman:tarjuman@db:5432/tarjuman
+      APP_ENV: production
+      # Override this in any real deployment. The default is here so
+      # `docker compose up` works out of the box for a local look.
+      SECRET_KEY: ${SECRET_KEY:-dev-only-insecure-key-change-me}
+      LOG_LEVEL: info
+      RATE_LIMIT_REQUESTS: "30"
+      RATE_LIMIT_WINDOW_SECONDS: "60"
+      MAX_TEXT_LENGTH: "5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
